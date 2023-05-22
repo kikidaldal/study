@@ -1,0 +1,83 @@
+---
+title: " test "
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+
+library(dplyr) 
+library(data.table)
+library(DT)
+library(plotly)
+library(ggplot2)
+library(esquisse)
+library(sqldf)
+library(lubridate)  
+
+## data load 
+delivery_charges<-as.data.frame(fread('delivery_charges.csv', header=T)) 
+items<-as.data.frame(fread('items.csv', header=T)) # 
+shipments<-as.data.frame(fread('shipments.csv', header=T)) # 
+shipments$ivday <- ymd(shipments$ivday)
+workers<-as.data.frame(fread('workers2.csv', header=T))
+```
+main 
+======================================================================
+row1 
+-----------------------------------------------------------------------
+
+### today
+
+```{r}
+r0<-sqldf(' select ivyearmonth, count(distinct ivno) parcel_cnt
+            from shipments 
+            group by 1
+            order by 1
+          ' )
+```
+advertising 
+======================================================================
+row 2{.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
+### yesterday
+
+```{r}
+## SQL 
+r0<-sqldf(' select ivyearmonth, count(distinct ivno) cnt 
+                  from shipments 
+            group by 1
+            order by 1 ' )
+
+## 시각화 
+g0<-ggplot(r0, aes(x=as.factor(ivyearmonth), y=cnt)) + 
+  geom_bar(stat = "identity", width=0.2) +
+  labs(x="기준년월", y="출고량") + 
+  theme_minimal()
+
+g0
+```
+
+### tommorow
+
+```{r}
+## SQL 
+r0<-sqldf(' select ivyearmonth, count(distinct ivno) cnt 
+                  from shipments 
+            group by 1
+            order by 1 ' )
+
+## 시각화 
+g0<-ggplot(r0, aes(x=as.factor(ivyearmonth), y=cnt)) + 
+  geom_bar(stat = "identity", width=0.2) +
+  labs(x="기준년월", y="출고량") + 
+  theme_minimal()
+
+## 동적 그래프(interactive graph, 마우스 커서에 따라 정보를 알려줌) 
+ggplotly(g0)
+```
+
